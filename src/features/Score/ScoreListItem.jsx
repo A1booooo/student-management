@@ -7,10 +7,10 @@ function ScoreListItem({item}) {
   }
   return (
     <tr>
-      <td>{item.name}</td>
-      <td>{item.class}</td>
+      <td>{item.student_id}</td>
+      <td>{item.student_id}</td>
       <td>{item.subject}</td>
-      <td>{item.semester}</td>
+      <td>{`${item.semesterSeason} ${item.semesterYear}`}</td>
       <td>{item.score}</td>
       <td>
         <button className="btn btn-ghost btn-soft btn-md mr-3" onClick={handleEdit}>edit</button>

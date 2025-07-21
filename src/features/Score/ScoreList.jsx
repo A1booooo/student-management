@@ -6,8 +6,11 @@ import getScoreList from '../../services/apiScore'
 export default function ScoreList() {
   const [scoreList, setScoreList] = useState([]);
   useEffect(() => {
-    const mockScoreList = getScoreList();
-    setScoreList(mockScoreList);
+    const fetchData = async () => {
+      const mockScoreList = await getScoreList();
+      setScoreList(mockScoreList);
+    };
+    fetchData();
   }, []);
   return (
     <div className="overflow-x-auto">
