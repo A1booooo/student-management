@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./ui/AppLayout";
 import ScoreList from "./features/Score/ScoreList";
-import StudentList from "./features/Student/StudentList";
+import StudentList from "./features/Student/studentlist";
 import StudentEdit from "./features/Student/StudentEdit";
 import ScoreEdit from "./features/Score/ScoreEdit";
 import Home from "./pages/Home";
