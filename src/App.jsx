@@ -13,6 +13,7 @@ import Signup from "./auth/Signup/Signup";
 import Info from "./user/Info";
 import StudentCreate from "./features/Student/StudentCreate";
 import ScoreUpload from "./features/Score/ScoreUpload";
+import NotFound from "./ui/NotFound"; // 导入404页面组件
 
 const queryClient = new QueryClient();
 
@@ -39,7 +40,11 @@ function App() {
             </Route>
             <Route path="login" element={<Login />} />
             <Route path="signup" element={<Signup />} />
+            {/* 404路由 - 匹配当前布局下的所有未定义路径 */}
+            <Route path="*" element={<NotFound />} />
           </Route>
+          {/* 根级404路由 - 匹配所有其他未定义的路径 */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
