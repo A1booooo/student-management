@@ -1,2 +1,7 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+/* 全局字体大小设置 */
+html {
+  font-size: 18px; /* 默认是16px，增加到18px使字体更大 */
+}

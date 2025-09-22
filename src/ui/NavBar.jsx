@@ -1,8 +1,39 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+
+import { logout } from "../services/apiAuth";
+import { useAtom, useAtomValue } from "jotai";
+import { userAtom, isStudentAtom } from "../atoms/user";
+import { getStudentByStudentId } from "../services/apistudent";
+import ToggleTheme from "./ToggleTheme";
 
 export default function NavBar() {
   const { pathname } = useLocation();
   const Navigate = useNavigate();
+  const [user, setUser] = useAtom(userAtom); // 已通过userAtom与存储关联
+  const isStudent = useAtomValue(isStudentAtom);
+  // 移除原有的localStorage读取逻辑
+  useEffect(() => {
+    const token = import.meta.env.VITE_SUPABASE_TOKEN;
+    const userToken = JSON.parse(localStorage.getItem(token));
+    if (!userToken) {
+      return;
+    }
+    setUser(userToken.user.user_metadata);
+    if (isStudent) {
+      const fetchStudentData = async () => {
+        const students = await getStudentByStudentId(user.sub);
+        const studentData = students[0];
+        setUser(studentData.avatar);
+      };
+      fetchStudentData();
+    }
+  }, []);
+
+  const signout = async () => {
+    await logout();
+    Navigate("/login");
+  };
 
   return (
     <div className="navbar bg-base-300 shadow-sm">
@@ -30,26 +61,55 @@ export default function NavBar() {
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
           >
             <li>
-              <a href="/home/student" className={`${pathname === '/home/student' ? 'menu-active' : ''}`}>Student</a>
+              <a
+                href="/home/student"
+                className={`${
+                  pathname === "/home/student" ? "menu-active" : ""
+                }`}
+              >
+                Student
+              </a>
             </li>
             <li>
-              <a href="/home/score" className={`${pathname === '/home/score' ? 'menu-active' : ''}`}>Score</a>
+              <a
+                href="/home/score"
+                className={`${pathname === "/home/score" ? "menu-active" : ""}`}
+              >
+                Score
+              </a>
             </li>
           </ul>
         </div>
-        <a className="btn btn-ghost text-xl" onClick={()=>Navigate('/')}>Sunshine</a>
+        <a className="btn btn-ghost text-xl" onClick={() => Navigate("/")}>
+          Sunshine
+        </a>
       </div>
-      <div className="navbar-center hidden lg:flex">
-        <ul className="menu menu-horizontal px-1">
-          <li>
-            <a href="/home/student" className={`${pathname === '/home/student' ? 'menu-active' : ''}`}>Student</a>
-          </li>
-          <li>
-            <a href="/home/score" className={`${pathname === '/home/score' ? 'menu-active' : ''}`}>Score</a>
-          </li>
-        </ul>
-      </div>
+      {!isStudent && (
+        <div className="navbar-center hidden lg:flex">
+          <ul className="menu menu-horizontal px-1">
+            <li>
+              <a
+                href="/home/student"
+                className={`${
+                  pathname === "/home/student" ? "menu-active" : ""
+                }`}
+              >
+                Student
+              </a>
+            </li>
+            <li>
+              <a
+                href="/home/score"
+                className={`${pathname === "/home/score" ? "menu-active" : ""}`}
+              >
+                Score
+              </a>
+            </li>
+          </ul>
+        </div>
+      )}
       <div className="navbar-end">
+        <ToggleTheme />
         <div className="dropdown dropdown-end">
           <div
             tabIndex={0}
@@ -57,10 +117,7 @@ export default function NavBar() {
             className="btn btn-ghost btn-circle avatar"
           >
             <div className="w-10 rounded-full">
-              <img
-                alt="Tailwind CSS Navbar component"
-                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-              />
+              <img alt="Tailwind CSS Navbar component" src={user.avatar} />
             </div>
           </div>
           <ul
@@ -68,15 +125,12 @@ export default function NavBar() {
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
           >
             <li>
-              <a className="justify-between">
-                Profile
+              <a className="justify-between" href="/home/info">
+                Info
               </a>
             </li>
             <li>
-              <a>Settings</a>
-            </li>
-            <li>
-              <a>Logout</a>
+              <a onClick={signout}>Logout</a>
             </li>
           </ul>
         </div>

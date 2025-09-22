@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 export default function StudentListItem({ student }) {
   const navigate = useNavigate();
   function handleEdit() {
-    navigate(`/home/student/${student.id}`);
+    navigate(`/home/student/${student.student_id}`);
   }
   return (
     <tr>
@@ -25,7 +25,7 @@ export default function StudentListItem({ student }) {
           </div>
         </div>
       </td>
-      <td>{student.class}</td>
+      <td>{`Class ${student.class} | Grade ${student.grade}`}</td>
       <th>
         <button className="btn btn-ghost btn-md" onClick={handleEdit}>
           details
