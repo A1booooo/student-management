@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { logout } from "../services/apiAuth";
 import { useAtom, useAtomValue } from "jotai";
 import { userAtom, isStudentAtom } from "../atoms/user";
-import { getStudentByStudentId } from "../services/apistudent";
+import { getStudentByStudentId } from "../services/apiStudent";
 import ToggleTheme from "./ToggleTheme";
 
 export default function NavBar() {
