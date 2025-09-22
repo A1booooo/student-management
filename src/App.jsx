@@ -7,7 +7,7 @@ import ScoreList from "./features/Score/ScoreList";
 import StudentList from "./features/Student/StudentList";
 import StudentEdit from "./features/Student/StudentEdit";
 import ScoreEdit from "./features/Score/ScoreEdit";
-import Home from "./pages/Home";
+import Home from "./pages/home";
 import Login from "./auth/Login/Login";
 import Signup from "./auth/Signup/Signup";
 import Info from "./user/Info";
