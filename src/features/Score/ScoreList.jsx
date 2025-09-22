@@ -15,7 +15,7 @@ import { getScoreList as getScoreListApi } from "../../services/apiScore";
 import {
   getStudentByStudentId as getStudentByStudentIdApi,
   getStudentList as getStudentListApi,
-} from "../../services/apistudent";
+} from "../../services/apiStudent";
 
 export default function ScoreList() {
   const { mutate: getScoreList, isPending: isGettingScoreList } = useMutation({
