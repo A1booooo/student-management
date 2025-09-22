@@ -2,12 +2,43 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-import { getStudentList } from "../../services/apistudent";
+import { useMutation } from "@tanstack/react-query";
 import { getUserId } from "../../utils/userHelper";
-import { uploadScore } from "../../services/apiScore";
 import Loading from "../../ui/Loading";
 
+import { getStudentList as getStudentListApi } from "../../services/apistudent";
+import { uploadScore as uploadScoreApi } from "../../services/apiScore";
+
 function ScoreUpload() {
+  const { mutate: getStudentList, isPending: isGettingStudentList } =
+    useMutation({
+      mutationFn: ({ teacherId }) => getStudentListApi(teacherId),
+      onSuccess: (StudentList) => {
+        setStudents(StudentList);
+        setCurrentStudent(StudentList[0]);
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
+  const { mutate: uploadScore } = useMutation({
+    mutationFn: (score) => uploadScoreApi(score),
+    onMutate: () => {
+      toast.loading("Uploading...");
+    },
+    onSuccess: () => {
+      toast.dismiss();
+      toast.success("Score uploaded successfully");
+      setTimeout(() => {
+        navigate("/home/score");
+      }, 1500);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const navigate = useNavigate();
   const [students, setStudents] = useState([]);
   const [currentStudent, setCurrentStudent] = useState({
@@ -18,7 +49,7 @@ function ScoreUpload() {
   });
   const [score, setScore] = useState(80);
   const [subject, setSubject] = useState("Mathematics");
-  const [loading, setLoading] = useState(false);
+  const isLoading = isGettingStudentList;
   const [semesterYear, setSemesterYear] = useState(new Date().getFullYear());
   const [semesterSeason, setSemesterSeason] = useState("Spring");
 
@@ -28,37 +59,27 @@ function ScoreUpload() {
   );
 
   useEffect(() => {
-    setLoading(true);
-    async function fetchData() {
+    function fetchData() {
       const teacherId = getUserId();
-      const StudentList = await getStudentList(teacherId);
-      setStudents(StudentList);
-      setCurrentStudent(StudentList[0]);
-      setLoading(false);
+      getStudentList({ teacherId });
     }
 
     fetchData();
   }, []);
 
   async function onClick() {
-    toast.loading("Uploading...");
-    await uploadScore({
+    uploadScore({
       student_id: currentStudent.student_id,
       subject,
       score,
       semesterYear,
       semesterSeason,
     });
-    toast.dismiss();
-    toast.success("Score uploaded successfully");
-    setTimeout(() => {
-      navigate("/home/score");
-    }, 1500);
   }
 
   return (
     <>
-      {loading ? (
+      {isLoading ? (
         <Loading />
       ) : (
         <div className="w-1/3 mx-auto shadow-2xl shadow-blue-300 rounded-box mt-40">

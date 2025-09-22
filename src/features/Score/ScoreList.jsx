@@ -1,27 +1,65 @@
 import { useState, useEffect } from "react";
 import { useAtomValue } from "jotai";
 import { useSearchParams } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import ScoreListItem from "./ScoreListItem";
-import { getScoreList } from "../../services/apiScore";
-import {
-  getStudentByStudentId,
-  getStudentList,
-} from "../../services/apistudent";
 import { getUserId } from "../../utils/userHelper";
 import Loading from "../../ui/Loading";
 import { isStudentAtom } from "../../atoms/user";
 import { scoreSearchConditionAtom } from "../../atoms/search";
 import Pagination from "../../ui/Pagination";
 
+import { getScoreList as getScoreListApi } from "../../services/apiScore";
+import {
+  getStudentByStudentId as getStudentByStudentIdApi,
+  getStudentList as getStudentListApi,
+} from "../../services/apistudent";
+
 export default function ScoreList() {
+  const { mutate: getScoreList, isPending: isGettingScoreList } = useMutation({
+    mutationFn: () => getScoreListApi(),
+    onSuccess: (data) => {
+      setScoreList(data);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const { mutate: getStudentList, isPending: isGettingStudentList } =
+    useMutation({
+      mutationFn: ({ teacherId }) => getStudentListApi(teacherId),
+      onSuccess: (data) => {
+        setStudents(data);
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
+  const { mutate: getStudentByStudentId, isPending: isGettingStudentById } =
+    useMutation({
+      mutationFn: ({ studentId }) => getStudentByStudentIdApi(studentId),
+      onSuccess: (data) => {
+        setStudents(data);
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
   const [scoreList, setScoreList] = useState([]);
   const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(false);
   const isStudent = useAtomValue(isStudentAtom);
+  const isLoading =
+    isGettingScoreList || isGettingStudentList || isGettingStudentById;
   const scoreSearchCondition = useAtomValue(scoreSearchConditionAtom);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [currentPage, setCurrentPage] = useState(Number(searchParams.get("page")) || 1);
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get("page")) || 1
+  );
   const pageSize = Number(import.meta.env.VITE_PAGE_SIZE);
   const filteredScoreList = scoreList
     .filter((item) => {
@@ -48,25 +86,20 @@ export default function ScoreList() {
   );
 
   useEffect(() => {
-    const fetchData = async () => {
+    function fetchData() {
       if (isStudent === null) {
         return;
       }
-      setLoading(true);
 
       const userId = getUserId();
-      const mockScoreList = await getScoreList();
-      setScoreList(mockScoreList);
-      if (!isStudent) {
-        const mockStudentList = await getStudentList(userId);
-        setStudents(mockStudentList);
-      } else {
-        const mockStudentList = await getStudentByStudentId(userId);
-        setStudents(mockStudentList);
-      }
+      getScoreList();
 
-      setLoading(false);
-    };
+      if (!isStudent) {
+        getStudentList({ teacherId: userId });
+      } else {
+        getStudentByStudentId({ studentId: userId });
+      }
+    }
     fetchData();
   }, [isStudent]);
 
@@ -80,7 +113,7 @@ export default function ScoreList() {
 
   return (
     <div>
-      {loading ? (
+      {isLoading ? (
         <Loading />
       ) : (
         <>

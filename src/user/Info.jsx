@@ -1,41 +1,97 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
 
-import { upLoadAvatar } from "../services/apiStorage";
 import { useAtom, useAtomValue } from "jotai";
 import { userAtom, isStudentAtom } from "../atoms/user";
-import { getTeacher } from "../services/apiTeacher";
-import { updateUser } from "../services/apiAuth";
 import Loading from "../ui/Loading";
-import { getStudentByStudentId, updateStudent } from "../services/apistudent";
+
+import { upLoadAvatar as uploadAvatarApi } from "../services/apiStorage";
+import { getTeacher as getTeacherApi } from "../services/apiTeacher";
+import { updateUser as updateUserApi } from "../services/apiAuth";
+import {
+  getStudentByStudentId as getStudentByStudentIdApi,
+  updateStudent as updateStudentApi,
+} from "../services/apistudent";
 
 export default function Info() {
+  const { mutate: getStudentByStudentId, isPending: isGettingStudentById } =
+    useMutation({
+      mutationFn: ({ studentId }) => getStudentByStudentIdApi(studentId),
+      onSuccess: (studentData) => {
+        setAvatar(studentData.avatar);
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
+  const { mutate: getTeacher, isPending: isGettingTeacherById } = useMutation({
+    mutationFn: ({ teacherId }) => getTeacherApi(teacherId),
+    onSuccess: (teacherData) => {
+      if (teacherData && teacherData.length > 0) {
+        setClassInChargeArr(JSON.parse(teacherData[0].class_in_charge));
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useMutation({
+    mutationFn: ({ fileName, file }) => uploadAvatarApi(fileName, file),
+    onSuccess: () => {},
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const { mutate: updateUser } = useMutation({
+    mutationFn: (newUserMetaData) => updateUserApi(newUserMetaData),
+    onSuccess: (newUserMeta) => {
+      //Update user state in jotai
+      setUser(newUserMeta.user.user_metadata);
+      if (!isStudent) {
+        toast.dismiss();
+        toast.success("Update Info Success");
+      }
+    },
+
+    onError: (error) => {
+      toast.dismiss();
+      toast.error(error.message);
+    },
+  });
+
+  const { mutate: updateStudent, isPending: isUpdatingStudent } = useMutation({
+    mutationFn: ({ studentId, studentData }) =>
+      updateStudentApi(studentId, studentData),
+    onSuccess: () => {
+      toast.dismiss();
+      toast.success("Update Info Success");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const [user, setUser] = useAtom(userAtom);
   const isStudent = useAtomValue(isStudentAtom);
   const [avatar, setAvatar] = useState(user.avatar); //Info中需要改变user,而NavBar中只需要读取,所以只需要在Info中多设置一个avatar
   const [avatarFile, setAvatarFile] = useState(null);
   const [classInChargeArr, setClassInChargeArr] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const isLoading = isGettingStudentById || isGettingTeacherById;
 
   useEffect(() => {
     if (isStudent) {
-      const fetchStudentData = async () => {
-        setLoading(true);
-        const students = await getStudentByStudentId(user.sub);
-        const studentData = students[0];
-        setAvatar(studentData.avatar);
-        setLoading(false);
+      const fetchStudentData = () => {
+        getStudentByStudentId({ studentId: user.sub });
       };
       fetchStudentData();
     } else {
-      const fetchTeacherData = async () => {
-        setLoading(true);
+      const fetchTeacherData = () => {
         setAvatar(user.avatar);
-        const data = await getTeacher(user.sub);
-        if (data && data.length > 0) {
-          setClassInChargeArr(JSON.parse(data[0].class_in_charge));
-        }
-        setLoading(false);
+        getTeacher({ teacherId: user.sub });
       };
       fetchTeacherData();
     }
@@ -48,8 +104,8 @@ export default function Info() {
     setAvatar(newAvatarUrl);
   }
 
-  async function onClick() {
-    toast.loading("Updating...");
+  function onClick() {
+    toast.loading("Uploading...");
     if (!avatarFile) {
       toast.dismiss();
       toast.error("Please select a file");
@@ -60,26 +116,25 @@ export default function Info() {
     const userToken = JSON.parse(localStorage.getItem(token));
     const fileName = "public/" + userToken.user.email + Date.now() + ".png";
     //Upload file in storage
-    await upLoadAvatar(fileName, avatarFile);
+    uploadAvatar({ fileName, file: avatarFile });
     //Update user metadata in supabase
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const avatarUrl =
       supabaseUrl + "/storage/v1/object/public/avatar/" + fileName;
-    const newUserMeta = await updateUser({ avatar: avatarUrl });
+    updateUser({ avatar: avatarUrl });
     if (isStudent) {
-      const newStudentMeta = await updateStudent(user.sub, {
-        avatar: avatarUrl,
+      updateStudent({
+        studentId: user.sub,
+        studentData: {
+          avatar: avatarUrl,
+        },
       });
     }
-    //Update user state in jotai
-    setUser(newUserMeta.user.user_metadata);
-    toast.dismiss();
-    toast.success("Update Info Success");
   }
 
   return (
     <>
-      {loading ? (
+      {isLoading ? (
         <Loading />
       ) : (
         <div className="w-1/3 mx-auto text-center shadow-xl mt-40 rounded-lg">
@@ -136,7 +191,7 @@ export default function Info() {
             </ul>
           )}
           <button className="btn btn-primary mx-2 my-4" onClick={onClick}>
-            Update Avater
+            Update Avatar
           </button>
         </div>
       )}

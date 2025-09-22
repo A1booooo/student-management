@@ -113,7 +113,7 @@ export default function Login() {
         <button className="btn btn-link">Forgetten password?</button>
       </div>
       <br />
-      <button className="btn btn-primary mx-2 my-2">Login</button>
+      <button className="btn btn-primary mx-2 my-2" disabled={isLoggingIn}>Login</button>
       <button
         className="btn btn-warning mx-2 my-2"
         onClick={() => Navigate("/signup")}

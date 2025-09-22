@@ -1,25 +1,70 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
 
-import { getScoreByScoreId } from "../../services/apiScore";
-import { getStudentByStudentId } from "../../services/apistudent";
-import { updateScore } from "../../services/apiScore";
 import Loading from "../../ui/Loading";
 
+import { getScoreByScoreId as getScoreByScoreIdApi } from "../../services/apiScore";
+import { getStudentByStudentId as getStudentByStudentIdApi } from "../../services/apistudent";
+import { updateScore as updateScoreApi } from "../../services/apiScore";
+
 export default function ScoreEdit() {
+  const { mutate: getScoreByScoreId, isPending: isGettingScoreById } =
+    useMutation({
+      mutationFn: ({ scoreId }) => getScoreByScoreIdApi(scoreId),
+      onSuccess: (score) => {
+        setScore(score.score);
+        setSubject(score.subject);
+        setSemester(score.semester);
+        setSeason(score.season);
+        getStudentByStudentId({ studentId: score.student_id });
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
+  const { mutate: getStudentByStudentId, isPending: isGettingStudentById } =
+    useMutation({
+      mutationFn: ({ studentId }) => getStudentByStudentIdApi(studentId),
+      onSuccess: (student) => {
+        setCurrentStudent(student);
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
+  const { mutate: updateScore } = useMutation({
+    mutationFn: ({ scoreId, score }) => updateScoreApi(scoreId, score),
+    onMutate:() => {
+      toast.loading("Updating...");
+    },
+    onSuccess: () => {
+      toast.dismiss();
+      toast.success("Score updated successfully");
+      setTimeout(() => {
+        navigate("/home/score");
+      }, 1500);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+  
   const { id } = useParams();
   const navigate = useNavigate();
+  const [score, setScore] = useState(80);
+  const [subject, setSubject] = useState("Math");
+  const [semester, setSemester] = useState(new Date().getFullYear());
+  const [season, setSeason] = useState("Spring");
   const [currentStudent, setCurrentStudent] = useState({
     name: "someone",
     class: "x",
     grade: "x",
   });
-  const [score, setScore] = useState(80);
-  const [subject, setSubject] = useState("Math");
-  const [loading, setLoading] = useState(false);
-  const [semester, setSemester] = useState(new Date().getFullYear());
-  const [season, setSeason] = useState("Spring");
+  const isLoading = isGettingScoreById || isGettingStudentById;
   const yearList = Array.from(
     { length: new Date().getFullYear() - 2000 + 1 },
     (_, i) => 2000 + i
@@ -27,16 +72,8 @@ export default function ScoreEdit() {
   yearList.reverse();
 
   useEffect(() => {
-    async function fetchScore() {
-      setLoading(true);
-      const score = await getScoreByScoreId(id);
-      setScore(score.score);
-      setSubject(score.subject);
-      setSemester(score.semester);
-      setSeason(score.season);
-      const students = await getStudentByStudentId(score.student_id);
-      setCurrentStudent(students[0]);
-      setLoading(false);
+    function fetchScore() {
+      getScoreByScoreId({ scoreId: id });
     }
     fetchScore();
   }, [id]);
@@ -45,25 +82,20 @@ export default function ScoreEdit() {
     setScore(e.target.value);
   }
 
-  async function onClick() {
+  function onClick() {
     const newScore = {
       score,
       subject,
       semester,
       season,
     };
-    toast.loading("Updating...");
-    await updateScore(id, newScore);
-    toast.dismiss();
-    toast.success("Score updated successfully");
-    setTimeout(() => {
-      navigate("/home/score");
-    }, 1500);
+    updateScore({ scoreId: id, score: newScore });
+    
   }
 
   return (
     <>
-      {loading ? (
+      {isLoading ? (
         <Loading />
       ) : (
         <div className="w-1/3 mx-auto text-center shadow-xl mt-40 rounded-lg">

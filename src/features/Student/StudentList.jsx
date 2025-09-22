@@ -1,17 +1,29 @@
 import { useState, useEffect } from "react";
 import { useAtomValue } from "jotai";
 import { useSearchParams } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import StudentListItem from "./StudentListItem";
-import { getStudentList } from "../../services/apistudent";
 import { getUserId } from "../../utils/userHelper";
 import Loading from "../../ui/Loading";
 import { studentSearchConditionAtom } from "../../atoms/search";
 import Pagination from "../../ui/Pagination";
 
+import { getStudentList as getStudentListApi } from "../../services/apistudent";
+
 export default function StudentList() {
+  const { mutate: getStudentList, isPending: isLoading } = useMutation({
+    mutationFn: ({ teacherId }) => getStudentListApi(teacherId),
+    onSuccess: (data) => {
+      setStudentList(data);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const [studentList, setStudentList] = useState([]);
-  const [loading, setLoading] = useState(false);
   const studentSearchCondition = useAtomValue(studentSearchConditionAtom);
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(
@@ -36,12 +48,9 @@ export default function StudentList() {
     currentPage * pageSize
   );
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
+    function fetchData() {
       const teacherId = getUserId();
-      const mockStudentList = await getStudentList(teacherId);
-      setStudentList(mockStudentList);
-      setLoading(false);
+      getStudentList({ teacherId });
     }
 
     fetchData();
@@ -56,7 +65,7 @@ export default function StudentList() {
   }, [searchParams]);
   return (
     <>
-      {loading ? (
+      {isLoading ? (
         <Loading />
       ) : (
         <>

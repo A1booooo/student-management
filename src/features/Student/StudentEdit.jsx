@@ -2,15 +2,56 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
 
-import { upLoadAvatar } from "../../services/apiStorage";
-import {
-  getStudentByStudentId,
-  updateStudent,
-} from "../../services/apistudent";
 import Loading from "../../ui/Loading";
 
+import { upLoadAvatar as upLoadAvatarApi } from "../../services/apiStorage";
+import {
+  getStudentByStudentId as getStudentByStudentIdApi,
+  updateStudent as updateStudentApi,
+} from "../../services/apistudent";
+
 export default function StudentEdit() {
+  const { mutate: getStudentByStudentId, isPending: isGettingStudent } =
+    useMutation({
+      mutationFn: ({ studentId }) => getStudentByStudentIdApi(studentId),
+      onSuccess: (student) => {
+        setName(student.name);
+        setGender(student.gender);
+        setAvatar(student.avatar);
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
+  const { mutate: updateStudent } = useMutation({
+    mutationFn: ({ studentId, student }) =>
+      updateStudentApi(studentId, student),
+    onSuccess: () => {
+      toast.dismiss();
+      toast.success("Update Student Success");
+      setTimeout(() => {
+        navigate("/home/student");
+      }, 1500);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const { mutate: upLoadAvatar } = useMutation({
+    mutationFn: ({ fileName, file }) => upLoadAvatarApi(fileName, file),
+    onMutate: () => {
+      toast.loading("Uploading...");
+    },
+    onSuccess: () => {},
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
   const { id } = useParams();
@@ -19,20 +60,11 @@ export default function StudentEdit() {
   );
   const [avatarFile, setAvatarFile] = useState(null);
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const isLoading = isGettingStudent;
 
   useEffect(() => {
-    const fetchStudentData = async () => {
-      setLoading(true);
-
-      const students = await getStudentByStudentId(id);
-      const student = students[0];
-      if (student) {
-        setName(student.name);
-        setGender(student.gender);
-        setAvatar(student.avatar);
-      }
-      setLoading(false);
+    const fetchStudentData = () => {
+      getStudentByStudentId({ studentId: id });
     };
     fetchStudentData();
   }, [id]);
@@ -45,7 +77,7 @@ export default function StudentEdit() {
   }
 
   async function onClick() {
-    toast.loading("Updating..."); 
+    toast.loading("Updating...");
     const student = {
       name,
       gender,
@@ -56,24 +88,19 @@ export default function StudentEdit() {
       const userToken = JSON.parse(localStorage.getItem(token));
       const fileName = "public/" + userToken.user.email + Date.now() + ".png";
       //Upload file in storage
-      await upLoadAvatar(fileName, avatarFile);
+      upLoadAvatar({ fileName, file: avatarFile });
       //Update user metadata in supabase
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const avatarUrl =
         supabaseUrl + "/storage/v1/object/public/avatar/" + fileName;
       student.avatar = avatarUrl;
     }
-    const newStudent = await updateStudent(id, student);
-    toast.dismiss();
-    toast.success("Update Student Success");
-    setTimeout(() => {
-      navigate("/home/student");
-    }, 1500);
+    updateStudent({ studentId: id, student });
   }
 
   return (
     <>
-      {loading ? (
+      {isLoading ? (
         <Loading />
       ) : (
         <div className="w-1/3 mx-auto text-center shadow-xl mt-40 rounded-lg">
