@@ -6,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { getUserId } from "../../utils/userHelper";
 import Loading from "../../ui/Loading";
 
-import { getStudentList as getStudentListApi } from "../../services/apistudent";
+import { getStudentList as getStudentListApi } from "../../services/apiStudent";
 import { uploadScore as uploadScoreApi } from "../../services/apiScore";
 
 function ScoreUpload() {

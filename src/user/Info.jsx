@@ -12,7 +12,7 @@ import { updateUser as updateUserApi } from "../services/apiAuth";
 import {
   getStudentByStudentId as getStudentByStudentIdApi,
   updateStudent as updateStudentApi,
-} from "../services/apistudent";
+} from "../services/apiStudent";
 
 export default function Info() {
   const { mutate: getStudentByStudentId, isPending: isGettingStudentById } =

@@ -10,7 +10,7 @@ import { upLoadAvatar as upLoadAvatarApi } from "../../services/apiStorage";
 import {
   getStudentByStudentId as getStudentByStudentIdApi,
   updateStudent as updateStudentApi,
-} from "../../services/apistudent";
+} from "../../services/apiStudent";
 
 export default function StudentEdit() {
   const { mutate: getStudentByStudentId, isPending: isGettingStudent } =

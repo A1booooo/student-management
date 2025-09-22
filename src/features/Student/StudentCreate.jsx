@@ -6,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import Loading from "../../ui/Loading";
 
 import { getTeacher as getTeacherApi } from "../../services/apiTeacher";
-import { createStudent as createStudentApi } from "../../services/apistudent";
+import { createStudent as createStudentApi } from "../../services/apiStudent";
 import { signup as signupApi } from "../../services/apiAuth";
 
 function StudentCreate() {

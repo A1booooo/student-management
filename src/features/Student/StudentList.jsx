@@ -10,7 +10,7 @@ import Loading from "../../ui/Loading";
 import { studentSearchConditionAtom } from "../../atoms/search";
 import Pagination from "../../ui/Pagination";
 
-import { getStudentList as getStudentListApi } from "../../services/apistudent";
+import { getStudentList as getStudentListApi } from "../../services/apiStudent";
 
 export default function StudentList() {
   const { mutate: getStudentList, isPending: isLoading } = useMutation({

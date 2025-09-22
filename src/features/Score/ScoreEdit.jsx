@@ -6,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import Loading from "../../ui/Loading";
 
 import { getScoreByScoreId as getScoreByScoreIdApi } from "../../services/apiScore";
-import { getStudentByStudentId as getStudentByStudentIdApi } from "../../services/apistudent";
+import { getStudentByStudentId as getStudentByStudentIdApi } from "../../services/apiStudent";
 import { updateScore as updateScoreApi } from "../../services/apiScore";
 
 export default function ScoreEdit() {
